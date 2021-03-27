@@ -1,19 +1,19 @@
+import padStart from 'lodash/padStart';
 import React, {Component} from 'react';
-import Video from 'react-native-video';
 import {
-  TouchableWithoutFeedback,
-  TouchableHighlight,
-  ImageBackground,
-  PanResponder,
-  StyleSheet,
   Animated,
-  SafeAreaView,
   Easing,
   Image,
-  View,
+  ImageBackground,
+  PanResponder,
+  SafeAreaView,
+  StyleSheet,
   Text,
+  TouchableHighlight,
+  TouchableWithoutFeedback,
+  View,
 } from 'react-native';
-import padStart from 'lodash/padStart';
+import Video from 'react-native-video';
 
 export default class VideoPlayer extends Component {
   static defaultProps = {
@@ -23,6 +23,7 @@ export default class VideoPlayer extends Component {
     playInBackground: false,
     playWhenInactive: false,
     resizeMode: 'contain',
+    showOption: false,
     isFullscreen: false,
     showOnStart: true,
     paused: false,
@@ -47,6 +48,7 @@ export default class VideoPlayer extends Component {
       muted: this.props.muted,
       volume: this.props.volume,
       rate: this.props.rate,
+      showOption: this.props.showOption,
       // Controls
 
       isFullscreen:
@@ -89,6 +91,7 @@ export default class VideoPlayer extends Component {
       onScreenTouch: this._onScreenTouch.bind(this),
       onEnterFullscreen: this.props.onEnterFullscreen,
       onExitFullscreen: this.props.onExitFullscreen,
+      onClickOptions: this.props.onClickOptions,
       onShowControls: this.props.onShowControls,
       onHideControls: this.props.onHideControls,
       onLoadStart: this._onLoadStart.bind(this),
@@ -104,6 +107,7 @@ export default class VideoPlayer extends Component {
      */
     this.methods = {
       toggleFullscreen: this._toggleFullscreen.bind(this),
+      toggleOption: this._toggleOption.bind(this),
       togglePlayPause: this._togglePlayPause.bind(this),
       toggleControls: this._toggleControls.bind(this),
       toggleTimer: this._toggleTimer.bind(this),
@@ -483,6 +487,19 @@ export default class VideoPlayer extends Component {
     } else {
       typeof this.events.onExitFullscreen === 'function' &&
         this.events.onExitFullscreen();
+    }
+
+    this.setState(state);
+  }
+
+  _toggleOption() {
+    let state = this.state;
+
+    state.showOption = !state.showOption;
+
+    if (state.showOption) {
+      typeof this.events.onClickOptions === 'function' &&
+        this.events.onClickOptions();
     }
 
     this.setState(state);
@@ -934,6 +951,9 @@ export default class VideoPlayer extends Component {
     const fullscreenControl = this.props.disableFullscreen
       ? this.renderNullControl()
       : this.renderFullscreen();
+    const optionControl = !this.props.showOption
+      ? this.renderNullControl()
+      : this.renderOption();
 
     return (
       <Animated.View
@@ -952,6 +972,7 @@ export default class VideoPlayer extends Component {
             {backControl}
             <View style={styles.controls.pullRight}>
               {volumeControl}
+              {optionControl}
               {fullscreenControl}
             </View>
           </SafeAreaView>
@@ -971,6 +992,13 @@ export default class VideoPlayer extends Component {
       />,
       this.events.onBack,
       styles.controls.back,
+    );
+  }
+  renderOption() {
+    return this.renderControl(
+      this.props.optionBtn,
+      this.events.onClickOptions,
+      styles.controls.fullscreen,
     );
   }
 
@@ -1063,7 +1091,7 @@ export default class VideoPlayer extends Component {
         {...this.player.seekPanResponder.panHandlers}>
         <View
           style={styles.seekbar.track}
-          onLayout={event =>
+          onLayout={(event) =>
             (this.player.seekerWidth = event.nativeEvent.layout.width)
           }
           pointerEvents={'none'}>
@@ -1193,7 +1221,7 @@ export default class VideoPlayer extends Component {
         <View style={[styles.player.container, this.styles.containerStyle]}>
           <Video
             {...this.props}
-            ref={videoPlayer => (this.player.ref = videoPlayer)}
+            ref={(videoPlayer) => (this.player.ref = videoPlayer)}
             resizeMode={this.state.resizeMode}
             volume={this.state.volume}
             paused={this.state.paused}
